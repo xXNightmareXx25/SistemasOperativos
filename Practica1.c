@@ -15,7 +15,6 @@ int main() {
             contador = 0;
         }
 
-        
         if (kbhit()) { // kbhit() devuelve 1 si se ha presionado una tecla y 0 si no
             comando[j++] = getch(); // Leer la tecla presionada (caracter)
             comando[j] = '\0'; // Agregar el caracter nulo al final del comando
@@ -28,8 +27,17 @@ int main() {
                 usleep(1500000); // Esperar 1.5s
 
             } 
+
         }
     }
 
     return 0;
 }
+
+//Notas
+/*
+kbhit() devuelve 1 si se ha presionado una tecla y 0 si no
+getch() devuelve el código ASCII de la tecla presionada
+13 es el código ASCII de Enter, en Linux es 10
+
+*/
