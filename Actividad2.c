@@ -4,29 +4,29 @@
 #include <string.h>
 #include <unistd.h>
 #include "kbhit.h"
+#include <stdlib.h>
 
 
 
 int Cargar(char *nombre_archivo){
     if (nombre_archivo[0] == '\0') { //Esto significa que no se ingresó un nombre de archivo
-        printf("Comandos> Modo de uso: cargar nombre_archivo\n");
-        return 1;
+        return 101;
     }
 
     FILE *archivo;
     archivo = fopen(nombre_archivo, "r"); // Abrir el archivo en modo lectura
     if (archivo == NULL) { // Si el archivo no existe
-        printf("Comandos>El archivo %s no existe\n", nombre_archivo);
-        return 1;
+        return 102;
     }
 
     char linea[100]; // Esta variable almacenará cada línea del archivo
     while (fgets(linea, 100, archivo) != NULL) { // Leer cada línea del archivo
-        printf("Comandos>\n%s", linea);
+        linea[strcspn(linea, "\n")] = '\0'; // Eliminar el salto de línea (Para que se vea bonito en el prompt)
+        Prompt(linea); // Mandar la línea al prompt
     }
+    fclose(archivo);
+    return 103; // Fin de archivo
 
-    fclose(archivo); // Cerrar el archivo
-    return 1;
 }
 
 int Enter(char *comando) {
@@ -38,9 +38,9 @@ int Enter(char *comando) {
 
 
     // ---- EXIT ----
-    if (strcmp(comando, "salir") == 0) {
-        printf("Comandos> Saliendo\n");
-        return 0; // Esto sale del programa porque se regresa 0 a la función main y el ciclo se rompe
+    sscanf(comando, "%s", cmd); // Leer el comando (la primera palabra del comando)
+    if (strcmp(cmd, "salir") == 0) {
+        return 104; // Esto sale del programa porque se regresa 0 a la función main y el ciclo se rompe
     }
 
 
@@ -48,35 +48,56 @@ int Enter(char *comando) {
     
     sscanf(comando, "%s %s", cmd, param1); // Leer el comando y el primer parámetro
     if (strcmp(cmd, "cargar") == 0) {
-        return Cargar(param1);
-    }
+    int resultado = Cargar(param1);
+    return resultado;
+  }
 
+    return 106; // Comando no reconocido
+}
 
-    // ---- OTROS ----
-
-    else {
-        printf("Comandos> Comando no reconocido\n");
-    }
-
-    // --------------------------------------------------
-
-    return 1;
+int Prompt(char *comando) {
+    printf("Comandos> %s\n",  comando); //Prompt
+    return 0;
 }
 
 int LineaComandos(char *comando, int *j) {
+    
     if (kbhit()) { // kbhit() devuelve 1 si se ha presionado una tecla y 0 si no
             comando[(*j)++] = getchar(); // Leer la tecla presionada (caracter)
             comando[(*j)] = '\0'; // Agregar el caracter nulo al final del comando
             
             if (comando[*j-1] == 10) { // 10 es el código ASCII de Enter
+                int codigoError = Enter(comando); // Ejecutar el comando
                 comando[*j-1] = '\0';
-                int Ejecutar = Enter(comando); // Procesar el comando
+
                 
-                if (Ejecutar == 0) {
-                    return 0; // Salir del ciclo
+                if (codigoError == 104) {
+                    exit(0); // Salir del programa
                 }
-                *j = 0; // Reiniciar
+
+                if (codigoError == 101) {
+                    strcpy(comando, "Error: No se ingresó un nombre de archivo, uso: cargar <nombre_archivo>");
+                    Prompt(comando);
+                }
+
+                if (codigoError == 102) {
+                    strcpy(comando, "Error: El archivo no existe");
+                    Prompt(comando);
+                }
+
+                if (codigoError == 103) {
+                    strcpy(comando, "Archivo leido exitosamente");
+                    Prompt(comando);
+                }
+
+                if (codigoError == 106) {
+                    strcpy(comando, "Comando no reconocido");
+                    Prompt(comando);
+                }
+
+                *j = 0; // Reiniciar el contador de caracteres
                 comando[0] = '\0'; // Reiniciar
+
             } 
             
             if (comando[*j-1] == 127) { // 127 es el código ASCII de backspace
@@ -85,9 +106,11 @@ int LineaComandos(char *comando, int *j) {
                 if (*j < 0) *j = 0; // Evita que j sea negativo
             }
 
-            printf("Comandos%d> %s\n",(*j),  comando); //Prompt
+            Prompt(comando); // Imprimir el prompt (comando)
+            
             usleep (100000); // Delay de 100 ms
-        }
+    }
+
     return 0;
 }
 
