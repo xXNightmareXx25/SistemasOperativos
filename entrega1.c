@@ -29,13 +29,13 @@ void Mensajes(WINDOW *mensajes, char *mensaje) {
 }
 
 void Registros(WINDOW *registros, PCB *pcb) {
-    mvwprintw(registros, 2, 10, "AX: %d", pcb->AX);
-    mvwprintw(registros, 2, 25, "BX: %d", pcb->BX);
-    mvwprintw(registros, 4, 10, "CX: %d", pcb->CX);
-    mvwprintw(registros, 4, 25, "DX: %d", pcb->DX);
-    mvwprintw(registros, 6, 10, "PC: %d", pcb->PC);
-    mvwprintw(registros, 6, 25, "IR: %s", pcb->IR);
-    mvwprintw(registros, 8, 10, "Linea leida: %s", pcb->LineaLeida);
+    mvwprintw(registros, 2, 10, "AX: %d        ", pcb->AX);
+    mvwprintw(registros, 2, 25, "BX: %d        ", pcb->BX);
+    mvwprintw(registros, 4, 10, "CX: %d        ", pcb->CX);
+    mvwprintw(registros, 4, 25, "DX: %d        ", pcb->DX);
+    mvwprintw(registros, 6, 10, "PC: %d        ", pcb->PC);
+    mvwprintw(registros, 6, 25, "IR: %s        ", pcb->IR);
+    mvwprintw(registros, 8, 10, "Linea leida: %s        ", pcb->LineaLeida);
     wrefresh(registros);
 }
 
@@ -84,34 +84,6 @@ void Errores(WINDOW *mensajes, int codigoError, char *comando, int *j) {
 
     //--------------------------------------------------------------------------------
 
-
-
-    // ----- ERRORES PARA EJECUTAR INSTRUCCIONES -----
-
-    if (codigoError == 107) {
-        Mensajes(mensajes,"                                                                        ");
-        Mensajes(mensajes, "Error: Instrucción no reconocida");
-        memset(comando, 0, sizeof(comando)); // Limpiar el comando 
-        *j = 0; // Reiniciar el contador de caractere
-    }
-
-    if (codigoError == 108) {
-        Mensajes(mensajes,"                                                                        ");
-        Mensajes(mensajes, "Error: División por cero");
-        memset(comando, 0, sizeof(comando)); // Limpiar el comando 
-        *j = 0; // Reiniciar el contador de caractere
-    }
-
-    if (codigoError == 109) {
-        Mensajes(mensajes,"                                                                        ");
-        Mensajes(mensajes, "Terminando la ejecución del programa...");
-        memset(comando, 0, sizeof(comando)); // Limpiar el comando 
-        *j = 0; // Reiniciar el contador de caractere
-    }
-
-
-    //--------------------------------------------------------------------------------
-
 }
 
 void ErroresInstrucciones(WINDOW *mensajes, int codigoError) {
@@ -143,8 +115,8 @@ int EjecutarInstruccion(WINDOW *registros, WINDOW *mensajes, PCB *pcb, char *lin
     for(int i = 0; linea[i]; i++){
         linea[i] = toupper(linea[i]);
     }
+    
     strcpy(pcb->IR, linea); // Almacenar la línea en el registro IR
-
     // Incrementar el PC
     pcb->PC++;
 
