@@ -7,6 +7,7 @@
 #include "kbhit.h"
 #include <ctype.h>
 
+int EstaLeyendo = 0;
 // Estructura para el CPU
 typedef struct {
     int AX;
@@ -563,6 +564,7 @@ int EjecutarInstruccion(WINDOW *registros, WINDOW *mensajes, PCB *pcb, char *lin
     return 0;
 }
 
+/*
 int LeerArchivo(WINDOW *registros,WINDOW *mensajes, PCB *pcb, FILE *archivo, char *linea) {
     linea[strcspn(linea, "\n")] = '\0'; // Eliminar el salto de línea (Para que se vea bonito en el prompt)
         // Ejecutar la instrucción de la línea
@@ -615,8 +617,35 @@ int Cargar(WINDOW *registros,WINDOW *mensajes, PCB *pcb, char *nombre_archivo) {
     
     fclose(archivo);
     return 103; // Fin de archivo
+}*/
+
+int LeerSiguinteLinea(FILE *archivo, char *linea){
+    if(fgets(linea, 100, archivo) != NULL){
+
+        return 1;
+    }
+    return 0;
 }
 
+int Cargar(WINDOW *registros,WINDOW *mensajes, PCB *pcb, char *nombre_archivo) {
+    
+    if (nombre_archivo[0] == '\0') { // Esto significa que no se ingresó un nombre de archivo
+        return 101;
+    }
+
+    FILE *archivo;
+    archivo = fopen(nombre_archivo, "r"); // Abrir el archivo en modo lectura
+    if (archivo == NULL) { // Si el archivo no existe
+        return 102;
+    }
+    
+    char linea[100]; // Esta variable almacenará cada línea del archivo
+    pcb->PC = 0; // Inicializar PC en 0
+    int codigoError = 0;
+    
+    fclose(archivo);
+    return 103; // Fin de archivo
+}
 
 int Enter(WINDOW *mensajes,WINDOW *registros, char *comando, PCB *pcb) {
     char cmd[100];
