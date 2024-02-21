@@ -136,7 +136,7 @@ int EjecutarInstruccion(WINDOW *registros, WINDOW *mensajes, PCB *pcb, char *lin
 
     int valor_numerico = ConversorStrings(mensajes, valor, pcb);
 
-    strcpy(pcb->IR, linea); // Almacenar la línea en el registro IR
+    //strcpy(pcb->IR, linea); // Almacenar la línea en el registro IR
     // Incrementar el PC
     pcb->PC++;
 
@@ -184,7 +184,7 @@ int EjecutarInstruccion(WINDOW *registros, WINDOW *mensajes, PCB *pcb, char *lin
         if (valor_numerico == 0) {
             codigoError = 108;
             ErroresInstrucciones(mensajes, codigoError);
-            return 1; // Error de división por cero
+            return 109; // Error de división por cero
         } else {
             if (strcmp(registro, "AX") == 0) pcb->AX /= valor_numerico;
             else if (strcmp(registro, "BX") == 0) pcb->BX /= valor_numerico;
@@ -260,10 +260,10 @@ int Cargar(WINDOW *registros,WINDOW *mensajes, PCB *pcb, char *nombre_archivo) {
             return codigoError;
         }
 
-        
+        strcpy(pcb->IR, linea);
         strcpy(pcb->LineaLeida, linea);
         Registros(registros, pcb);
-        usleep(100000);
+        usleep(1000000);
 
         
     }
