@@ -86,10 +86,13 @@ void Errores(WINDOW *mensajes, int codigoError, char *comando, int *j) {
 
 }
 
-void ErroresInstrucciones(WINDOW *mensajes, int codigoError) {
+
+int ErroresInstrucciones(WINDOW *mensajes, int codigoError) {
     if (codigoError == 107) {
         Mensajes(mensajes,"                                                                        ");
         Mensajes(mensajes, "Error: Instrucción no reconocida");
+        
+        
     }
 
     if (codigoError == 108) {
@@ -100,6 +103,7 @@ void ErroresInstrucciones(WINDOW *mensajes, int codigoError) {
     if (codigoError == 109) {
         Mensajes(mensajes,"                                                                        ");
         Mensajes(mensajes, "Terminando la ejecución del programa...");
+        
     }
 }
 
@@ -230,6 +234,11 @@ int Cargar(WINDOW *registros,WINDOW *mensajes, PCB *pcb, char *nombre_archivo) {
 
         Registros(registros, pcb);
         usleep(1000000);
+
+        if (codigoError == 103) {
+            fclose(archivo);
+            return 103; // Fin de archivo
+        }
     }
     fclose(archivo);
     return 103; // Fin de archivo
@@ -258,6 +267,7 @@ int Enter(WINDOW *mensajes,WINDOW *registros, char *comando, PCB *pcb) {
     if (strcmp(cmd, "cargar") == 0) {
         sscanf(comando, "%*s %s", param1); // Leer el primer parámetro
         int resultado = Cargar(registros,mensajes, pcb, param1);
+        memset(comando, 0, sizeof(comando)); // Limpiar el comando
         return resultado;
     }
 
