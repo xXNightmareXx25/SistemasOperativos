@@ -122,7 +122,7 @@ void ErroresInstrucciones(WINDOW *mensajes, int codigoError) {
 
     if (codigoError == 108) {
         Mensajes(mensajes,"                                                                        ");
-        Mensajes(mensajes, "Error: División por cero");
+        Mensajes(mensajes, "Error: División por cero o registro no válido");
     }
 
     if (codigoError == 109) {
