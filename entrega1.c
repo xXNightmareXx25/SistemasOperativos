@@ -91,8 +91,6 @@ int ErroresInstrucciones(WINDOW *mensajes, int codigoError) {
     if (codigoError == 107) {
         Mensajes(mensajes,"                                                                        ");
         Mensajes(mensajes, "Error: Instrucción no reconocida");
-        
-        
     }
 
     if (codigoError == 108) {
@@ -102,8 +100,7 @@ int ErroresInstrucciones(WINDOW *mensajes, int codigoError) {
 
     if (codigoError == 109) {
         Mensajes(mensajes,"                                                                        ");
-        Mensajes(mensajes, "Terminando la ejecución del programa...");
-        
+        Mensajes(mensajes, "Terminando la ejecución del programa...");        
     }
 }
 
@@ -124,8 +121,15 @@ int EjecutarInstruccion(WINDOW *registros, WINDOW *mensajes, PCB *pcb, char *lin
     // Incrementar el PC
     pcb->PC++;
 
+    // ----- INSTRUCCIONES PARA END -----
+    if (strcmp(instruccion, "END") == 0) {
+        codigoError = 109;
+        ErroresInstrucciones(mensajes, codigoError);
+        return 109; // Fin de archivo
+    } 
+
     // ----- INSTRUCCIONES PARA MOV -----
-    if (strcmp(instruccion, "MOV") == 0) {
+    else if (strcmp(instruccion, "MOV") == 0) {
         if (strcmp(registro, "AX") == 0) pcb->AX = valor;
         else if (strcmp(registro, "BX") == 0) pcb->BX = valor;
         else if (strcmp(registro, "CX") == 0) pcb->CX = valor;
@@ -186,11 +190,6 @@ int EjecutarInstruccion(WINDOW *registros, WINDOW *mensajes, PCB *pcb, char *lin
         else if (strcmp(registro, "DX") == 0) pcb->DX--;
     }
 
-    // ----- INSTRUCCIONES PARA END -----
-    else if (strcmp(instruccion, "END") == 0) {
-        codigoError = 109;
-        ErroresInstrucciones(mensajes, codigoError);
-    } 
 
 
     // ERROR
@@ -225,20 +224,28 @@ int Cargar(WINDOW *registros,WINDOW *mensajes, PCB *pcb, char *nombre_archivo) {
             linea[i] = toupper(linea[i]);
         }
         int codigoError = EjecutarInstruccion(registros,mensajes, pcb, linea);
-        if (codigoError != 0) {
-            //Mensajes(mensajes, ("Error en la línea: %s", linea));
-            fclose(archivo);
-            return codigoError;
-        }
-        strcpy(pcb->LineaLeida, linea);
 
-        Registros(registros, pcb);
-        usleep(1000000);
+        if (codigoError == 109) {
+            fclose(archivo);
+            return 109; // Fin de archivo
+        }
 
         if (codigoError == 103) {
             fclose(archivo);
             return 103; // Fin de archivo
         }
+        
+        if (codigoError != 0) {
+            fclose(archivo);
+            return codigoError;
+        }
+
+        strcpy(pcb->LineaLeida, linea);
+
+        Registros(registros, pcb);
+        usleep(100000);
+
+        
     }
     fclose(archivo);
     return 103; // Fin de archivo
@@ -357,8 +364,7 @@ int main(void) {
     while (1) {
         LineaComandos(comandos, mensajes, registros, comando, &j, &linea, &pcb);
         Prompt(comandos, linea, comando);
-        usleep(100000);
-        
+
     }
 
     endwin();
