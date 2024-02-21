@@ -244,6 +244,10 @@ int Cargar(WINDOW *registros,WINDOW *mensajes, PCB *pcb, char *nombre_archivo) {
     while (fgets(linea, 100, archivo) != NULL) { // Leer cada línea del archivo
         linea[strcspn(linea, "\n")] = '\0'; // Eliminar el salto de línea (Para que se vea bonito en el prompt)
         // Ejecutar la instrucción de la línea
+        //convierte la linea a mayusculas
+        for(int i = 0; linea[i]; i++){
+            linea[i] = toupper(linea[i]);
+        }
         int codigoError = EjecutarInstruccion(registros,mensajes, pcb, linea);
         if (codigoError != 0) {
             //Mensajes(mensajes, ("Error en la línea: %s", linea));
