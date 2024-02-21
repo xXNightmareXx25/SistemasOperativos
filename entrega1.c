@@ -126,6 +126,76 @@ int ConversorStrings(WINDOW *mensajes, char *valor, PCB *pcb) {
     }
 }
 
+int EsDigito(char *valor){
+    int i = 0;
+    if(valor[0] == '-'){
+        i = 1;
+    }
+    for(; valor[i]; i++){
+        if(!isdigit(valor[i])){
+            return 0;
+        }
+    }
+    return 1;
+}
+
+//================================= OPERACIONES =================================
+int MOV(WINDOW *mensajes, char *registro, char *valor, PCB *pcb){
+    int valor_numerico = ConversorStrings(mensajes, valor, pcb);
+        if (strcmp(registro, "AX") == 0) pcb->AX = valor_numerico;
+        else if (strcmp(registro, "BX") == 0) pcb->BX = valor_numerico;
+        else if (strcmp(registro, "CX") == 0) pcb->CX = valor_numerico;
+        else if (strcmp(registro, "DX") == 0) pcb->DX = valor_numerico;
+}
+
+int ADD(WINDOW *mensajes, char *registro, char *valor, PCB *pcb){
+    int valor_numerico = ConversorStrings(mensajes, valor, pcb);
+        if (strcmp(registro, "AX") == 0) pcb->AX += valor_numerico;
+        else if (strcmp(registro, "BX") == 0) pcb->BX += valor_numerico;
+        else if (strcmp(registro, "CX") == 0) pcb->CX += valor_numerico;
+        else if (strcmp(registro, "DX") == 0) pcb->DX += valor_numerico;
+}
+
+int SUB(WINDOW *mensajes, char *registro, char *valor, PCB *pcb){
+    int valor_numerico = ConversorStrings(mensajes, valor, pcb);
+        if (strcmp(registro, "AX") == 0) pcb->AX -= valor_numerico;
+        else if (strcmp(registro, "BX") == 0) pcb->BX -= valor_numerico;
+        else if (strcmp(registro, "CX") == 0) pcb->CX -= valor_numerico;
+        else if (strcmp(registro, "DX") == 0) pcb->DX -= valor_numerico;
+}
+
+int MUL(WINDOW *mensajes, char *registro, char *valor, PCB *pcb){
+    int valor_numerico = ConversorStrings(mensajes, valor, pcb);
+        if (strcmp(registro, "AX") == 0) pcb->AX *= valor_numerico;
+        else if (strcmp(registro, "BX") == 0) pcb->BX *= valor_numerico;
+        else if (strcmp(registro, "CX") == 0) pcb->CX *= valor_numerico;
+        else if (strcmp(registro, "DX") == 0) pcb->DX *= valor_numerico;
+}
+
+int DIV(WINDOW *mensajes, char *registro, char *valor, PCB *pcb){
+    int valor_numerico = ConversorStrings(mensajes, valor, pcb);
+            if (strcmp(registro, "AX") == 0) pcb->AX /= valor_numerico;
+            else if (strcmp(registro, "BX") == 0) pcb->BX /= valor_numerico;
+            else if (strcmp(registro, "CX") == 0) pcb->CX /= valor_numerico;
+            else if (strcmp(registro, "DX") == 0) pcb->DX /= valor_numerico;
+            
+}
+
+int INC(WINDOW *mensajes, char *registro, PCB *pcb){
+    if (strcmp(registro, "AX") == 0) pcb->AX++;
+        else if (strcmp(registro, "BX") == 0) pcb->BX++;
+        else if (strcmp(registro, "CX") == 0) pcb->CX++;
+        else if (strcmp(registro, "DX") == 0) pcb->DX++;
+}
+
+int DEC(WINDOW *mensajes, char *registro, PCB *pcb){
+    if (strcmp(registro, "AX") == 0) pcb->AX--;
+        else if (strcmp(registro, "BX") == 0) pcb->BX--;
+        else if (strcmp(registro, "CX") == 0) pcb->CX--;
+        else if (strcmp(registro, "DX") == 0) pcb->DX--;
+}
+
+
 int EjecutarInstruccion(WINDOW *registros, WINDOW *mensajes, PCB *pcb, char *linea) {
     char instruccion[100], registro[100];
     char valor[100];
@@ -134,85 +204,329 @@ int EjecutarInstruccion(WINDOW *registros, WINDOW *mensajes, PCB *pcb, char *lin
     // Leer la instrucción y el registro de la línea
     sscanf(linea, "%s %s %s", instruccion, registro, valor);
 
-    int valor_numerico = ConversorStrings(mensajes, valor, pcb);
+    int valor_numerico = 0;
+    
 
     //strcpy(pcb->IR, linea); // Almacenar la línea en el registro IR
     // Incrementar el PC
     pcb->PC++;
 
-    // ----- INSTRUCCIONES PARA END -----
+    //convierte la linea a mayusculas 
+    for(int i = 0; linea[i]; i++){
+        linea[i] = toupper(linea[i]);
+    }
+    
+
+    
     if (strcmp(instruccion, "END") == 0) {
         codigoError = 109;
         ErroresInstrucciones(mensajes, codigoError);
         return 109; // Fin de archivo
     } 
     
-    // ----- INSTRUCCIONES PARA MOV -----
-    else if (strcmp(instruccion, "MOV") == 0) {
-        if (strcmp(registro, "AX") == 0) pcb->AX = valor_numerico;
-        else if (strcmp(registro, "BX") == 0) pcb->BX = valor_numerico;
-        else if (strcmp(registro, "CX") == 0) pcb->CX = valor_numerico;
-        else if (strcmp(registro, "DX") == 0) pcb->DX = valor_numerico;
-    } 
-    
-    // ----- INSTRUCCIONES PARA ADD -----
-    else if (strcmp(instruccion, "ADD") == 0) {
-        if (strcmp(registro, "AX") == 0) pcb->AX += valor_numerico;
-        else if (strcmp(registro, "BX") == 0) pcb->BX += valor_numerico;
-        else if (strcmp(registro, "CX") == 0) pcb->CX += valor_numerico;
-        else if (strcmp(registro, "DX") == 0) pcb->DX += valor_numerico;
-    } 
-    
-    //----- INSTRUCCIONES PARA SUB -----
-    else if (strcmp(instruccion, "SUB") == 0) {
-        if (strcmp(registro, "AX") == 0) pcb->AX -= valor_numerico;
-        else if (strcmp(registro, "BX") == 0) pcb->BX -= valor_numerico;
-        else if (strcmp(registro, "CX") == 0) pcb->CX -= valor_numerico;
-        else if (strcmp(registro, "DX") == 0) pcb->DX -= valor_numerico;
-    } 
-    
-    //----- INSTRUCCIONES PARA MUL -----
-    else if (strcmp(instruccion, "MUL") == 0) {
-        if (strcmp(registro, "AX") == 0) pcb->AX *= valor_numerico;
-        else if (strcmp(registro, "BX") == 0) pcb->BX *= valor_numerico;
-        else if (strcmp(registro, "CX") == 0) pcb->CX *= valor_numerico;
-        else if (strcmp(registro, "DX") == 0) pcb->DX *= valor_numerico;
-    } 
-    
-    //----- INSTRUCCIONES PARA DIV -----
-    else if (strcmp(instruccion, "DIV") == 0) {
-        if (valor_numerico == 0) {
-            codigoError = 108;
-            ErroresInstrucciones(mensajes, codigoError);
-            return 109; // Error de división por cero
-        } else {
-            if (strcmp(registro, "AX") == 0) pcb->AX /= valor_numerico;
-            else if (strcmp(registro, "BX") == 0) pcb->BX /= valor_numerico;
-            else if (strcmp(registro, "CX") == 0) pcb->CX /= valor_numerico;
-            else if (strcmp(registro, "DX") == 0) pcb->DX /= valor_numerico;
+    //================================= INSTRUCCIONES PARA MOV =================================
+    else if (strcmp(instruccion, "MOV") == 0 && ( (strcmp(valor, "AX") == 0) ||
+                                                  (strcmp(valor, "BX") == 0) ||
+                                                  (strcmp(valor, "CX") == 0) ||
+                                                  (strcmp(valor, "DX") == 0) ||
+                                                  (valor_numerico) == 0)) {
+        valor_numerico = EsDigito(valor); // Comprueba si el valor es un registro o un número
+        
+        // Si el valor es un número, entonces se puede hacer la operacion
+        if (valor_numerico == 1) 
+         {
+            MOV(mensajes, registro, valor, pcb);       
         }
+
+        // Si el valor es un registro, entonces se debe comprobar si es un registro válido
+        // Si el registro es válido, entonces se puede hacer la operación
+        else if (valor_numerico == 0) {
+
+            if      (strcmp(valor, "AX") == 0) { valor_numerico = pcb->AX; MOV(mensajes, registro, valor, pcb);}
+            else if (strcmp(valor, "BX") == 0) {valor_numerico = pcb->BX; MOV(mensajes, registro, valor, pcb);}
+            else if (strcmp(valor, "CX") == 0) {valor_numerico = pcb->CX; MOV(mensajes, registro, valor, pcb);}
+            else if (strcmp(valor, "DX") == 0) {valor_numerico = pcb->DX; MOV(mensajes, registro, valor, pcb);}
+
+            else {
+                // Si el registro no es válido, devuelve un error
+                codigoError = 107;
+                ErroresInstrucciones(mensajes, codigoError);
+                return codigoError;
+            }
+        }
+
+        else {
+            // Si el registro no es válido, devuelve un error
+            codigoError = 107;
+            ErroresInstrucciones(mensajes, codigoError);
+            return codigoError;
+        }                   
+        
     } 
-    
-    //----- INSTRUCCIONES PARA INC -----
-    else if (strcmp(instruccion, "INC") == 0) {
-        if (strcmp(registro, "AX") == 0) pcb->AX++;
-        else if (strcmp(registro, "BX") == 0) pcb->BX++;
-        else if (strcmp(registro, "CX") == 0) pcb->CX++;
-        else if (strcmp(registro, "DX") == 0) pcb->DX++;
+    //================================================================================================
+
+
+
+    //================================= INSTRUCCIONES PARA ADD =================================
+    else if (strcmp(instruccion, "ADD") == 0 && ( (strcmp(valor, "AX") == 0) ||
+                                                  (strcmp(valor, "BX") == 0) ||
+                                                  (strcmp(valor, "CX") == 0) ||
+                                                  (strcmp(valor, "DX") == 0) ||
+                                                  (valor_numerico) == 0)) {
+        valor_numerico = EsDigito(valor); // Comprueba si el valor es un registro o un número
+        
+        // Si el valor es un número, entonces se puede hacer la operacion
+        if (valor_numerico == 1) 
+         {
+            ADD(mensajes, registro, valor, pcb);       
+        }
+
+        // Si el valor es un registro, entonces se debe comprobar si es un registro válido
+        // Si el registro es válido, entonces se puede hacer la operación
+        else if (valor_numerico == 0) {
+
+            if      (strcmp(valor, "AX") == 0) { valor_numerico = pcb->AX; ADD(mensajes, registro, valor, pcb);}
+            else if (strcmp(valor, "BX") == 0) {valor_numerico = pcb->BX; ADD(mensajes, registro, valor, pcb);}
+            else if (strcmp(valor, "CX") == 0) {valor_numerico = pcb->CX; ADD(mensajes, registro, valor, pcb);}
+            else if (strcmp(valor, "DX") == 0) {valor_numerico = pcb->DX; ADD(mensajes, registro, valor, pcb);}
+
+            else {
+                // Si el registro no es válido, devuelve un error
+                codigoError = 107;
+                ErroresInstrucciones(mensajes, codigoError);
+                return codigoError;
+            }
+        }
+
+        else {
+            // Si el registro no es válido, devuelve un error
+            codigoError = 107;
+            ErroresInstrucciones(mensajes, codigoError);
+            return codigoError;
+        }                   
+        
     } 
+    //================================================================================================
+
+
     
-    //----- INSTRUCCIONES PARA DEC -----
-    else if (strcmp(instruccion, "DEC") == 0) {
-        if (strcmp(registro, "AX") == 0) pcb->AX--;
-        else if (strcmp(registro, "BX") == 0) pcb->BX--;
-        else if (strcmp(registro, "CX") == 0) pcb->CX--;
-        else if (strcmp(registro, "DX") == 0) pcb->DX--;
+    //================================= INSTRUCCIONES PARA SUB =================================
+    else if (strcmp(instruccion, "SUB") == 0 && ( (strcmp(valor, "AX") == 0) ||
+                                                  (strcmp(valor, "BX") == 0) ||
+                                                  (strcmp(valor, "CX") == 0) ||
+                                                  (strcmp(valor, "DX") == 0) ||
+                                                  (valor_numerico) == 0)) {
+        valor_numerico = EsDigito(valor); // Comprueba si el valor es un registro o un número
+        
+        // Si el valor es un número, entonces se puede hacer la operacion
+        if (valor_numerico == 1) 
+         {
+            SUB(mensajes, registro, valor, pcb);       
+        }
+
+        // Si el valor es un registro, entonces se debe comprobar si es un registro válido
+        // Si el registro es válido, entonces se puede hacer la operación
+        else if (valor_numerico == 0) {
+
+            if      (strcmp(valor, "AX") == 0) { valor_numerico = pcb->AX; SUB(mensajes, registro, valor, pcb);}
+            else if (strcmp(valor, "BX") == 0) {valor_numerico = pcb->BX; SUB(mensajes, registro, valor, pcb);}
+            else if (strcmp(valor, "CX") == 0) {valor_numerico = pcb->CX; SUB(mensajes, registro, valor, pcb);}
+            else if (strcmp(valor, "DX") == 0) {valor_numerico = pcb->DX; SUB(mensajes, registro, valor, pcb);}
+
+            else {
+                // Si el registro no es válido, devuelve un error
+                codigoError = 107;
+                ErroresInstrucciones(mensajes, codigoError);
+                return codigoError;
+            }
+        }
+
+        else {
+            // Si el registro no es válido, devuelve un error
+            codigoError = 107;
+            ErroresInstrucciones(mensajes, codigoError);
+            return codigoError;
+        }                   
+        
     } 
+    //================================================================================================
     
+    //================================= INSTRUCCIONES PARA MUL =================================
+    else if (strcmp(instruccion, "MUL") == 0 && ( (strcmp(valor, "AX") == 0) ||
+                                                  (strcmp(valor, "BX") == 0) ||
+                                                  (strcmp(valor, "CX") == 0) ||
+                                                  (strcmp(valor, "DX") == 0) ||
+                                                  (valor_numerico) == 0)) {
+        valor_numerico = EsDigito(valor); // Comprueba si el valor es un registro o un número
+        
+        // Si el valor es un número, entonces se puede hacer la operacion
+        if (valor_numerico == 1) 
+         {
+            MUL(mensajes, registro, valor, pcb);       
+        }
+
+        // Si el valor es un registro, entonces se debe comprobar si es un registro válido
+        // Si el registro es válido, entonces se puede hacer la operación
+        else if (valor_numerico == 0) {
+
+            if      (strcmp(valor, "AX") == 0) { valor_numerico = pcb->AX; MUL(mensajes, registro, valor, pcb);}
+            else if (strcmp(valor, "BX") == 0) {valor_numerico = pcb->BX; MUL(mensajes, registro, valor, pcb);}
+            else if (strcmp(valor, "CX") == 0) {valor_numerico = pcb->CX; MUL(mensajes, registro, valor, pcb);}
+            else if (strcmp(valor, "DX") == 0) {valor_numerico = pcb->DX; MUL(mensajes, registro, valor, pcb);}
+
+            else {
+                // Si el registro no es válido, devuelve un error
+                codigoError = 107;
+                ErroresInstrucciones(mensajes, codigoError);
+                return codigoError;
+            }
+        }
+
+        else {
+            // Si el registro no es válido, devuelve un error
+            codigoError = 107;
+            ErroresInstrucciones(mensajes, codigoError);
+            return codigoError;
+        }                   
+        
+    } 
+    //================================================================================================ 
+
+
+
+    //================================= INSTRUCCIONES PARA DIV =================================
+    else if (strcmp(instruccion, "DIV") == 0 && ( (strcmp(valor, "AX") == 0) ||
+                                                  (strcmp(valor, "BX") == 0) ||
+                                                  (strcmp(valor, "CX") == 0) ||
+                                                  (strcmp(valor, "DX") == 0) ||
+                                                  (valor_numerico) == 0)) {
+        valor_numerico = EsDigito(valor); // Comprueba si el valor es un registro o un número
+        
+        // Si el valor es un número, entonces se puede hacer la operacion
+        if (valor_numerico == 1) 
+         {
+            DIV(mensajes, registro, valor, pcb);       
+        }
+
+        // Si el valor es un registro, entonces se debe comprobar si es un registro válido
+        // Si el registro es válido, entonces se puede hacer la operación
+        else if (valor_numerico == 0) {
+
+            if      (strcmp(valor, "AX") == 0) { valor_numerico = pcb->AX; DIV(mensajes, registro, valor, pcb);}
+            else if (strcmp(valor, "BX") == 0) {valor_numerico = pcb->BX; DIV(mensajes, registro, valor, pcb);}
+            else if (strcmp(valor, "CX") == 0) {valor_numerico = pcb->CX; DIV(mensajes, registro, valor, pcb);}
+            else if (strcmp(valor, "DX") == 0) {valor_numerico = pcb->DX; DIV(mensajes, registro, valor, pcb);}
+
+            else {
+                // Si el registro no es válido, devuelve un error
+                codigoError = 107;
+                ErroresInstrucciones(mensajes, codigoError);
+                return codigoError;
+            }
+        }
+
+        else {
+            // Si el registro no es válido, devuelve un error
+            codigoError = 107;
+            ErroresInstrucciones(mensajes, codigoError);
+            return codigoError;
+        }                   
+        
+    } 
+    //================================================================================================
+
+
+
+    //================================= INSTRUCCIONES PARA INC =================================
+    else if (strcmp(instruccion, "INC") == 0 && ( (strcmp(valor, "AX") == 0) ||
+                                                  (strcmp(valor, "BX") == 0) ||
+                                                  (strcmp(valor, "CX") == 0) ||
+                                                  (strcmp(valor, "DX") == 0) ||
+                                                  (valor_numerico) == 0)) {
+        valor_numerico = EsDigito(valor); // Comprueba si el valor es un registro o un número
+        
+        // Si el valor es un número, entonces se puede hacer la operacion
+        if (valor_numerico == 1) 
+         {
+            INC(mensajes, registro, pcb);       
+        }
+
+        // Si el valor es un registro, entonces se debe comprobar si es un registro válido
+        // Si el registro es válido, entonces se puede hacer la operación
+        else if (valor_numerico == 0) {
+
+            if      (strcmp(valor, "AX") == 0) { valor_numerico = pcb->AX; INC(mensajes, registro, pcb);}
+            else if (strcmp(valor, "BX") == 0) {valor_numerico = pcb->BX; INC(mensajes, registro, pcb);}
+            else if (strcmp(valor, "CX") == 0) {valor_numerico = pcb->CX; INC(mensajes, registro, pcb);}
+            else if (strcmp(valor, "DX") == 0) {valor_numerico = pcb->DX; INC(mensajes, registro, pcb);}
+
+            else {
+                // Si el registro no es válido, devuelve un error
+                codigoError = 107;
+                ErroresInstrucciones(mensajes, codigoError);
+                return codigoError;
+            }
+        }
+
+        else {
+            // Si el registro no es válido, devuelve un error
+            codigoError = 107;
+            ErroresInstrucciones(mensajes, codigoError);
+            return codigoError;
+        }                   
+        
+    } 
+    //================================================================================================ 
+    
+
+
+    //================================= INSTRUCCIONES PARA DEC =================================
+    else if (strcmp(instruccion, "DEC") == 0 && ( (strcmp(valor, "AX") == 0) ||
+                                                  (strcmp(valor, "BX") == 0) ||
+                                                  (strcmp(valor, "CX") == 0) ||
+                                                  (strcmp(valor, "DX") == 0) ||
+                                                  (valor_numerico) == 0)) {
+        valor_numerico = EsDigito(valor); // Comprueba si el valor es un registro o un número
+        
+        // Si el valor es un número, entonces se puede hacer la operacion
+        if (valor_numerico == 1) 
+         {
+            DEC(mensajes, registro, pcb);       
+        }
+
+        // Si el valor es un registro, entonces se debe comprobar si es un registro válido
+        // Si el registro es válido, entonces se puede hacer la operación
+        else if (valor_numerico == 0) {
+
+            if      (strcmp(valor, "AX") == 0) { valor_numerico = pcb->AX; DEC(mensajes, registro, pcb);}
+            else if (strcmp(valor, "BX") == 0) {valor_numerico = pcb->BX; DEC(mensajes, registro,  pcb);}
+            else if (strcmp(valor, "CX") == 0) {valor_numerico = pcb->CX; DEC(mensajes, registro, pcb);}
+            else if (strcmp(valor, "DX") == 0) {valor_numerico = pcb->DX; DEC(mensajes, registro, pcb);}
+
+            else {
+                // Si el registro no es válido, devuelve un error
+                codigoError = 107;
+                ErroresInstrucciones(mensajes, codigoError);
+                return codigoError;
+            }
+        }
+
+        else {
+            // Si el registro no es válido, devuelve un error
+            codigoError = 107;
+            ErroresInstrucciones(mensajes, codigoError);
+            return codigoError;
+        }                   
+        
+    } 
+    //================================================================================================ 
+    
+
     // ERROR
     else {
         // Si la instrucción no es válida, devuelve un error
         codigoError = 107;
+        printf("Exploto\n");
         ErroresInstrucciones(mensajes, codigoError);
         return codigoError;
     }
@@ -263,7 +577,7 @@ int Cargar(WINDOW *registros,WINDOW *mensajes, PCB *pcb, char *nombre_archivo) {
         strcpy(pcb->IR, linea);
         strcpy(pcb->LineaLeida, linea);
         Registros(registros, pcb);
-        usleep(1000000);
+        usleep(50000);
 
         
     }
