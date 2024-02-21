@@ -39,12 +39,15 @@ void Registros(WINDOW *registros, PCB *pcb) {
     wrefresh(registros);
 }
 
-void Errores(WINDOW *mensajes, int codigoError, char *comando, int *j) {
+void Errores(WINDOW *mensajes, int codigoError, char *comando, int *j, PCB *pcb) {
     if (codigoError == 104) {
         Mensajes(mensajes,"                                                                        ");
         Mensajes(mensajes, "Saliendo del programa...");
         clear();
         usleep(1000000); // Espera antes de salir
+        free(pcb); // Liberar la memoria reservada para la estructura PCB
+        Mensajes(mensajes, "Liberando...             ");
+        usleep(1000000);
         endwin();
         exit(0); // Salir del programa
     }
@@ -132,7 +135,7 @@ int ConversorStrings(WINDOW *mensajes, char *valor, PCB *pcb) {
         valor_numerico = atoi(valor);
     } else {
         // Si valor es un registro del PCB, asigna su valor correspondiente
-        if (strcmp(valor, "AX") == 0) valor_numerico = pcb->AX;
+        if (strcmp(valor, "AX") == 0) valor_numerico = pcb->AX; 
         else if (strcmp(valor, "BX") == 0) valor_numerico = pcb->BX;
         else if (strcmp(valor, "CX") == 0) valor_numerico = pcb->CX;
         else if (strcmp(valor, "DX") == 0) valor_numerico = pcb->DX;
@@ -236,7 +239,7 @@ int DEC(WINDOW *mensajes, char *registro, PCB *pcb){
 //================================= EJECUTAR INSTRUCCION =================================
 int EjecutarInstruccion(WINDOW *registros, WINDOW *mensajes, PCB *pcb, char *linea) {
     char instruccion[100], registro[100];
-    char valor[100];
+    char valor[100] = "";
     int codigoError = 0;
 
     // Leer la instrucción y el registro de la línea
@@ -484,92 +487,64 @@ int EjecutarInstruccion(WINDOW *registros, WINDOW *mensajes, PCB *pcb, char *lin
 
 
     //================================= INSTRUCCIONES PARA INC =================================
-    else if (strcmp(instruccion, "INC") == 0 && ( (strcmp(valor, "AX") == 0) ||
-                                                  (strcmp(valor, "BX") == 0) ||
-                                                  (strcmp(valor, "CX") == 0) ||
-                                                  (strcmp(valor, "DX") == 0) ||
-                                                  (valor_numerico) == 0)) {
-        valor_numerico = EsDigito(valor); // Comprueba si el valor es un registro o un número
-        
-        // Si el valor es un número, entonces se puede hacer la operacion
-        if (valor_numerico == 1) 
-         {
-            INC(mensajes, registro, pcb);       
-        }
+    else if (strcmp(instruccion, "INC") == 0 && ( (strcmp(registro, "AX") == 0) ||
+                                                  (strcmp(registro, "BX") == 0) ||
+                                                  (strcmp(registro, "CX") == 0) ||
+                                                  (strcmp(registro, "DX") == 0)
+                                                )) {
+
 
         // Si el valor es un registro, entonces se debe comprobar si es un registro válido
         // Si el registro es válido, entonces se puede hacer la operación
-        else if (valor_numerico == 0) {
 
-            if      (strcmp(valor, "AX") == 0) { valor_numerico = pcb->AX; INC(mensajes, registro, pcb);}
-            else if (strcmp(valor, "BX") == 0) {valor_numerico = pcb->BX; INC(mensajes, registro, pcb);}
-            else if (strcmp(valor, "CX") == 0) {valor_numerico = pcb->CX; INC(mensajes, registro, pcb);}
-            else if (strcmp(valor, "DX") == 0) {valor_numerico = pcb->DX; INC(mensajes, registro, pcb);}
 
-            else {
-                // Si el registro no es válido, devuelve un error
-                codigoError = 107;
-                strcpy(pcb->IR, linea); 
-                Registros(registros, pcb);
-                ErroresInstrucciones(mensajes, codigoError, pcb);
-                return codigoError;
-            }
-        }
+        if     (strcmp(registro, "AX") == 0) { INC(mensajes, registro, pcb);}
+        else if (strcmp(registro, "BX") == 0) { INC(mensajes, registro, pcb);}
+        else if (strcmp(registro, "CX") == 0) { INC(mensajes, registro, pcb);}
+        else if (strcmp(registro, "DX") == 0) { INC(mensajes, registro, pcb);}
 
         else {
             // Si el registro no es válido, devuelve un error
-            codigoError = 107;
-            ErroresInstrucciones(mensajes, codigoError, pcb);
-            return codigoError;
-        }                   
+            strcpy(pcb->IR, linea); 
+            Registros(registros, pcb);
+            
+        }
+
+    }
+                 
         
-    } 
+    
+
 
     //================================================================================================ 
     
 
 
     //================================= INSTRUCCIONES PARA DEC =================================
-    else if (strcmp(instruccion, "DEC") == 0 && ( (strcmp(valor, "AX") == 0) ||
-                                                  (strcmp(valor, "BX") == 0) ||
-                                                  (strcmp(valor, "CX") == 0) ||
-                                                  (strcmp(valor, "DX") == 0) ||
-                                                  (valor_numerico) == 0)) {
-        valor_numerico = EsDigito(valor); // Comprueba si el valor es un registro o un número
-        
-        // Si el valor es un número, entonces se puede hacer la operacion
-        if (valor_numerico == 1) 
-         {
-            DEC(mensajes, registro, pcb);       
-        }
+    else if (strcmp(instruccion, "DEC") == 0 && ( (strcmp(registro, "AX") == 0) ||
+                                                  (strcmp(registro, "BX") == 0) ||
+                                                  (strcmp(registro, "CX") == 0) ||
+                                                  (strcmp(registro, "DX") == 0)
+                                                )) {
+
 
         // Si el valor es un registro, entonces se debe comprobar si es un registro válido
         // Si el registro es válido, entonces se puede hacer la operación
-        else if (valor_numerico == 0) {
 
-            if      (strcmp(valor, "AX") == 0) { valor_numerico = pcb->AX; DEC(mensajes, registro, pcb);}
-            else if (strcmp(valor, "BX") == 0) {valor_numerico = pcb->BX; DEC(mensajes, registro,  pcb);}
-            else if (strcmp(valor, "CX") == 0) {valor_numerico = pcb->CX; DEC(mensajes, registro, pcb);}
-            else if (strcmp(valor, "DX") == 0) {valor_numerico = pcb->DX; DEC(mensajes, registro, pcb);}
 
-            else {
-                // Si el registro no es válido, devuelve un error
-                strcpy(pcb->IR, linea); 
-                Registros(registros, pcb);
-                codigoError = 107;
-                ErroresInstrucciones(mensajes, codigoError, pcb);
-                return codigoError;
-            }
-        }
+        if     (strcmp(registro, "AX") == 0) { DEC(mensajes, registro, pcb);}
+        else if (strcmp(registro, "BX") == 0) { DEC(mensajes, registro, pcb);}
+        else if (strcmp(registro, "CX") == 0) { DEC(mensajes, registro, pcb);}
+        else if (strcmp(registro, "DX") == 0) { DEC(mensajes, registro, pcb);}
 
         else {
             // Si el registro no es válido, devuelve un error
-            codigoError = 107;
-            ErroresInstrucciones(mensajes, codigoError, pcb);
-            return codigoError;
-        }                   
-        
-    } 
+            strcpy(pcb->IR, linea); 
+            Registros(registros, pcb);
+            
+        }
+
+    }
     //================================================================================================ 
     
 
@@ -587,6 +562,33 @@ int EjecutarInstruccion(WINDOW *registros, WINDOW *mensajes, PCB *pcb, char *lin
     return 0;
 }
 
+int LeerArchivo(WINDOW *registros,WINDOW *mensajes, PCB *pcb, FILE *archivo, char *linea) {
+    linea[strcspn(linea, "\n")] = '\0'; // Eliminar el salto de línea (Para que se vea bonito en el prompt)
+        // Ejecutar la instrucción de la línea
+        Mayusculainador(linea);
+        
+        int codigoError = EjecutarInstruccion(registros,mensajes, pcb, linea);
+
+        if (codigoError == 109) {
+            fclose(archivo);
+            return 109; // Fin de archivo
+        }
+
+        if (codigoError == 103) {
+            fclose(archivo);
+            return 103; // Fin de archivo
+        }
+        
+        if (codigoError != 0) {
+            fclose(archivo);
+            return codigoError;
+        }
+
+        strcpy(pcb->IR, linea);
+        strcpy(pcb->LineaLeida, linea);
+        Registros(registros, pcb);
+        usleep(50000);
+}
 
 int Cargar(WINDOW *registros,WINDOW *mensajes, PCB *pcb, char *nombre_archivo) {
     if (nombre_archivo[0] == '\0') { // Esto significa que no se ingresó un nombre de archivo
@@ -601,6 +603,8 @@ int Cargar(WINDOW *registros,WINDOW *mensajes, PCB *pcb, char *nombre_archivo) {
     
     char linea[100]; // Esta variable almacenará cada línea del archivo
     pcb->PC = 0; // Inicializar PC en 0
+    
+    
     while (fgets(linea, 100, archivo) != NULL) { // Leer cada línea del archivo
         linea[strcspn(linea, "\n")] = '\0'; // Eliminar el salto de línea (Para que se vea bonito en el prompt)
         // Ejecutar la instrucción de la línea
@@ -627,9 +631,6 @@ int Cargar(WINDOW *registros,WINDOW *mensajes, PCB *pcb, char *nombre_archivo) {
         strcpy(pcb->LineaLeida, linea);
         Registros(registros, pcb);
         usleep(50000);
-        
-
-        
     }
 
     
@@ -672,7 +673,7 @@ int Enter(WINDOW *mensajes,WINDOW *registros, char *comando, PCB *pcb) {
         pcb->CX = 0;
         pcb->DX = 0;
         pcb->PC = 0;
-        strcpy(pcb->IR, "                     ");
+        strcpy(pcb->IR, "                      ");
         strcpy(pcb->LineaLeida, "                ");
         Registros(registros, pcb);
         return 110;
@@ -692,7 +693,7 @@ int LineaComandos(WINDOW *comandos, WINDOW *mensajes,WINDOW *registros, char *co
                 int codigoError = Enter(mensajes, registros, comando, pcb);
                 *j = 0; // Reiniciar el contador de caracteres
                 (*linea)++; // Incrementar el contador de líneas
-                Errores(mensajes, codigoError, comando, j);
+                Errores(mensajes, codigoError, comando, j, pcb);
                 } else if (caracter == 127 ){  //Tecla 127 Backspace, verificar si es
                         if(*j>0){ //Si hay caracteres para borrar
                                 (*j)--;
@@ -702,6 +703,7 @@ int LineaComandos(WINDOW *comandos, WINDOW *mensajes,WINDOW *registros, char *co
 
                                 getyx(comandos,y,x); //Ventana de comandos
                                 mvwaddch(comandos, y,x-1, ' ');
+                                mvwprintw(comandos, y, x-2, "                    ");
                                 wmove(comandos, y, x-1);
                                 wrefresh(comandos);
                 }
@@ -766,15 +768,15 @@ int main(void) {
     int j = 0; // Contador de caracteres
     int linea = 0; // Contador de líneas
 
-    PCB pcb; // Crear una instancia de la estructura PCB
-    memset(&pcb, 0, sizeof(PCB)); // Inicializar la estructura a 0
-
+    PCB *pcb = (PCB*)malloc(sizeof(PCB)); // Reservar memoria para la estructura PCB
+    memset(pcb, 0, sizeof(PCB)); // Inicializar la estructura a 0
+   
     Prompt(comandos, linea, comando);
 
-    Registros(registros, &pcb);
+    Registros(registros, pcb);
 
     while (1) {
-        LineaComandos(comandos, mensajes, registros, comando, &j, &linea, &pcb);
+        LineaComandos(comandos, mensajes, registros, comando, &j, &linea, pcb);
         Prompt(comandos, linea, comando);
         if (linea > 20) {
             linea = 0;
@@ -785,6 +787,7 @@ int main(void) {
         }
     }  
 
+    free(pcb); // Liberar la memoria reservada para la estructura PCB
     endwin();
     return 0;
 }
