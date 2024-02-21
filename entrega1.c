@@ -702,9 +702,9 @@ int LineaComandos(WINDOW *comandos, WINDOW *mensajes,WINDOW *registros, char *co
                                 int y,x;
 
                                 getyx(comandos,y,x); //Ventana de comandos
-                                mvwaddch(comandos, y,x-1, ' ');
-                                mvwprintw(comandos, y, x-2, "                    ");
+                                mvwaddch(comandos, y,x-1, ' ');                                
                                 wmove(comandos, y, x-1);
+                                mvwprintw(comandos, y, x-2, "                    ");
                                 wrefresh(comandos);
                 }
             } else  { // Agregar el carácter al búfer
