@@ -3,12 +3,20 @@
 #include <time.h>
 #include <string.h>
 #include <unistd.h>
-#include "kbhit.h"
 #include <stdlib.h>
+#include "kbhit.h"
+#include <ctype.h>
 
-int AX, BX, CX, DX, PC = 0;
-char IR[100] = "VACIO";
-char LineaLeida[100] = "VACIO";
+// Estructura para el CPU
+typedef struct {
+    int AX;
+    int BX;
+    int CX;
+    int DX;
+    int PC;
+    char IR[100];
+    char LineaLeida[100];
+} PCB;
 
 void Prompt(WINDOW *comandos, int linea, char *comando) {
     mvwprintw(comandos, linea + 1, 2, "%d>> %s", linea, comando);
@@ -20,14 +28,14 @@ void Mensajes(WINDOW *mensajes, char *mensaje) {
     wrefresh(mensajes);
 }
 
-void Registros(WINDOW *registros, int AX, int BX, int CX, int DX, int PC, char *IR, char *LineaLeida) {
-    mvwprintw(registros, 2, 10, "AX: %d", AX);
-    mvwprintw(registros, 2, 25, "BX: %d", BX);
-    mvwprintw(registros, 4, 10, "CX: %d", CX);
-    mvwprintw(registros, 4, 25, "DX: %d", DX);
-    mvwprintw(registros, 6, 10, "PC: %d", PC);
-    mvwprintw(registros, 6, 25, "IR: %s", IR);
-    mvwprintw(registros, 8, 10, "Linea leida: %s", LineaLeida);
+void Registros(WINDOW *registros, PCB *pcb) {
+    mvwprintw(registros, 2, 10, "AX: %d", pcb->AX);
+    mvwprintw(registros, 2, 25, "BX: %d", pcb->BX);
+    mvwprintw(registros, 4, 10, "CX: %d", pcb->CX);
+    mvwprintw(registros, 4, 25, "DX: %d", pcb->DX);
+    mvwprintw(registros, 6, 10, "PC: %d", pcb->PC);
+    mvwprintw(registros, 6, 25, "IR: %s", pcb->IR);
+    mvwprintw(registros, 8, 10, "Linea leida: %s", pcb->LineaLeida);
     wrefresh(registros);
 }
 
@@ -37,6 +45,8 @@ void Errores(WINDOW *mensajes, int codigoError, char *comando, int *j) {
         usleep(2000000); // Espera antes de salir
         exit(0); // Salir del programa
     }
+
+    // ----- ERRORES PARA CARGAR -----
 
     if (codigoError == 101) {
         Mensajes(mensajes,"                                                                        ");
@@ -58,6 +68,11 @@ void Errores(WINDOW *mensajes, int codigoError, char *comando, int *j) {
         memset(comando, 0, sizeof(comando)); // Limpiar el comando 
         *j = 0; // Reiniciar el contador de caractere
     }
+    //--------------------------------------------------------------------------------
+
+
+
+    // ----- ERRORES PARA COMANDOS -----
 
     if (codigoError == 106) {
         Mensajes(mensajes,"                                                                        ");
@@ -66,29 +81,154 @@ void Errores(WINDOW *mensajes, int codigoError, char *comando, int *j) {
 
         *j = 0; // Reiniciar el contador de caracteres
     }
+
+    //--------------------------------------------------------------------------------
+
+
+
+    // ----- ERRORES PARA EJECUTAR INSTRUCCIONES -----
+
+    if (codigoError == 107) {
+        Mensajes(mensajes,"                                                                        ");
+        Mensajes(mensajes, "Error: Instrucción no reconocida");
+        memset(comando, 0, sizeof(comando)); // Limpiar el comando 
+        *j = 0; // Reiniciar el contador de caractere
+    }
+
+    if (codigoError == 108) {
+        Mensajes(mensajes,"                                                                        ");
+        Mensajes(mensajes, "Error: División por cero");
+        memset(comando, 0, sizeof(comando)); // Limpiar el comando 
+        *j = 0; // Reiniciar el contador de caractere
+    }
+
+    if (codigoError == 109) {
+        Mensajes(mensajes,"                                                                        ");
+        Mensajes(mensajes, "Terminando la ejecución del programa...");
+        memset(comando, 0, sizeof(comando)); // Limpiar el comando 
+        *j = 0; // Reiniciar el contador de caractere
+    }
+
+
+    //--------------------------------------------------------------------------------
+
 }
 
-void EjecutarInstruccion(WINDOW *registros, char *linea) {
+void ErroresInstrucciones(WINDOW *mensajes, int codigoError) {
+    if (codigoError == 107) {
+        Mensajes(mensajes,"                                                                        ");
+        Mensajes(mensajes, "Error: Instrucción no reconocida");
+    }
+
+    if (codigoError == 108) {
+        Mensajes(mensajes,"                                                                        ");
+        Mensajes(mensajes, "Error: División por cero");
+    }
+
+    if (codigoError == 109) {
+        Mensajes(mensajes,"                                                                        ");
+        Mensajes(mensajes, "Terminando la ejecución del programa...");
+    }
+}
+
+int EjecutarInstruccion(WINDOW *registros, WINDOW *mensajes, PCB *pcb, char *linea) {
     char instruccion[100], registro[100];
     int valor;
+    int codigoError = 0;
 
     // Leer la instrucción y el registro de la línea
     sscanf(linea, "%s %s %d", instruccion, registro, &valor);
 
-    // Ejecutar la instrucción según el comando
-    if (strcmp(instruccion, "MOV") == 0) {
-        if (strcmp(registro, "AX") == 0) AX = valor;
-        else if (strcmp(registro, "BX") == 0) BX = valor;
-        else if (strcmp(registro, "CX") == 0) CX = valor;
-        else if (strcmp(registro, "DX") == 0) DX = valor;
-    } else if (strcmp(instruccion, "ADD") == 0) {
-        if (strcmp(registro, "AX") == 0) AX += valor;
-        // Aqui tengo que poner el resto de los registros
+    // Convertir la línea a mayúsculas
+    for(int i = 0; linea[i]; i++){
+        linea[i] = toupper(linea[i]);
     }
-    // Aqui debo poner el resto de las instrucciones
+    strcpy(pcb->IR, linea); // Almacenar la línea en el registro IR
+
+    // Incrementar el PC
+    pcb->PC++;
+
+    // ----- INSTRUCCIONES PARA MOV -----
+    if (strcmp(instruccion, "MOV") == 0) {
+        if (strcmp(registro, "AX") == 0) pcb->AX = valor;
+        else if (strcmp(registro, "BX") == 0) pcb->BX = valor;
+        else if (strcmp(registro, "CX") == 0) pcb->CX = valor;
+        else if (strcmp(registro, "DX") == 0) pcb->DX = valor;
+    } 
+    
+    // ----- INSTRUCCIONES PARA ADD -----
+    else if (strcmp(instruccion, "ADD") == 0) {
+        if (strcmp(registro, "AX") == 0) pcb->AX += valor;
+        else if (strcmp(registro, "BX") == 0) pcb->BX += valor;
+        else if (strcmp(registro, "CX") == 0) pcb->CX += valor;
+        else if (strcmp(registro, "DX") == 0) pcb->DX += valor;
+    } 
+    
+    // ----- INSTRUCCIONES PARA SUB -----
+    else if (strcmp(instruccion, "SUB") == 0) {
+        if (strcmp(registro, "AX") == 0) pcb->AX -= valor;
+        else if (strcmp(registro, "BX") == 0) pcb->BX -= valor;
+        else if (strcmp(registro, "CX") == 0) pcb->CX -= valor;
+        else if (strcmp(registro, "DX") == 0) pcb->DX -= valor;
+    } 
+    
+    // ----- INSTRUCCIONES PARA MUL -----
+    else if (strcmp(instruccion, "MUL") == 0) {
+        if (strcmp(registro, "AX") == 0) pcb->AX *= valor;
+        else if (strcmp(registro, "BX") == 0) pcb->BX *= valor;
+        else if (strcmp(registro, "CX") == 0) pcb->CX *= valor;
+        else if (strcmp(registro, "DX") == 0) pcb->DX *= valor;
+    } 
+
+    // ----- INSTRUCCIONES PARA DIV -----
+    else if (strcmp(instruccion, "DIV") == 0) {
+        if (valor == 0) {
+            codigoError = 108;
+            ErroresInstrucciones(mensajes, codigoError);
+            return 1; // Error de división por cero
+        } else {
+            if (strcmp(registro, "AX") == 0) pcb->AX /= valor;
+            else if (strcmp(registro, "BX") == 0) pcb->BX /= valor;
+            else if (strcmp(registro, "CX") == 0) pcb->CX /= valor;
+            else if (strcmp(registro, "DX") == 0) pcb->DX /= valor;
+        }
+    } 
+    
+    // ----- INSTRUCCIONES PARA INC -----
+    else if (strcmp(instruccion, "INC") == 0) {
+        if (strcmp(registro, "AX") == 0) pcb->AX++;
+        else if (strcmp(registro, "BX") == 0) pcb->BX++;
+        else if (strcmp(registro, "CX") == 0) pcb->CX++;
+        else if (strcmp(registro, "DX") == 0) pcb->DX++;
+    } 
+    
+    // ----- INSTRUCCIONES PARA DEC -----
+    else if (strcmp(instruccion, "DEC") == 0) {
+        if (strcmp(registro, "AX") == 0) pcb->AX--;
+        else if (strcmp(registro, "BX") == 0) pcb->BX--;
+        else if (strcmp(registro, "CX") == 0) pcb->CX--;
+        else if (strcmp(registro, "DX") == 0) pcb->DX--;
+    }
+
+    // ----- INSTRUCCIONES PARA END -----
+    else if (strcmp(instruccion, "END") == 0) {
+        codigoError = 109;
+        ErroresInstrucciones(mensajes, codigoError);
+    } 
+
+
+    // ERROR
+    else {
+        codigoError = 107;
+        ErroresInstrucciones(mensajes, codigoError);
+        return codigoError;
+    }
+
+    codigoError = 0;
+    return 0; // No hay error
 }
 
-int Cargar(WINDOW *registros, char *nombre_archivo) {
+int Cargar(WINDOW *registros,WINDOW *mensajes, PCB *pcb, char *nombre_archivo) {
     if (nombre_archivo[0] == '\0') { // Esto significa que no se ingresó un nombre de archivo
         return 101;
     }
@@ -100,24 +240,30 @@ int Cargar(WINDOW *registros, char *nombre_archivo) {
     }
 
     char linea[100]; // Esta variable almacenará cada línea del archivo
+    pcb->PC = 0; // Inicializar PC en 0
     while (fgets(linea, 100, archivo) != NULL) { // Leer cada línea del archivo
         linea[strcspn(linea, "\n")] = '\0'; // Eliminar el salto de línea (Para que se vea bonito en el prompt)
         // Ejecutar la instrucción de la línea
-        EjecutarInstruccion(registros, linea);
-        strcpy(LineaLeida, linea);
+        int codigoError = EjecutarInstruccion(registros,mensajes, pcb, linea);
+        if (codigoError != 0) {
+            //Mensajes(mensajes, ("Error en la línea: %s", linea));
+            fclose(archivo);
+            return codigoError;
+        }
+        strcpy(pcb->LineaLeida, linea);
 
-        Registros(registros, AX, BX, CX, DX, PC, IR, LineaLeida);
+        Registros(registros, pcb);
         usleep(1000000);
     }
     fclose(archivo);
     return 103; // Fin de archivo
 }
 
-int Enter(WINDOW *mensajes, char *comando) {
+
+int Enter(WINDOW *mensajes,WINDOW *registros, char *comando, PCB *pcb) {
     char cmd[100];
     int height, width;
     getmaxyx(stdscr, height, width);
-    WINDOW *registros = newwin(height / 2.4, width, 2 * height / 3.5, 0);
     wbkgd(registros, COLOR_PAIR(3));
     box(registros, 0, 0);
     mvwprintw(registros, 0, 2, "REGISTROS");
@@ -135,15 +281,14 @@ int Enter(WINDOW *mensajes, char *comando) {
     sscanf(comando, "%s", cmd); // Leer el comando
     if (strcmp(cmd, "cargar") == 0) {
         sscanf(comando, "%*s %s", param1); // Leer el primer parámetro
-        int resultado = Cargar(registros, param1);
+        int resultado = Cargar(registros,mensajes, pcb, param1);
         return resultado;
     }
 
     return 106; // Comando no reconocido
 }
 
-
-int LineaComandos(WINDOW *comandos, WINDOW *mensajes, char *comando, int *j, int *linea) {
+int LineaComandos(WINDOW *comandos, WINDOW *mensajes,WINDOW *registros, char *comando, int *j, int *linea, PCB *pcb) {
     int caracter = 0;
     
     if (kbhit()) { // kbhit() devuelve 1 si se ha presionado una tecla y 0 si no
@@ -151,7 +296,7 @@ int LineaComandos(WINDOW *comandos, WINDOW *mensajes, char *comando, int *j, int
         if (caracter != ERR) { // Verificar si se presionó una tecla
             if (caracter == '\n') { // Verificar si la tecla fue Enter
                 comando[*j] = '\0'; // Finalizar el comando
-                int codigoError = Enter(mensajes, comando);
+                int codigoError = Enter(mensajes, registros, comando, pcb);
                 *j = 0; // Reiniciar el contador de caracteres
                 (*linea)++; // Incrementar el contador de líneas
                 Errores(mensajes, codigoError, comando, j);
@@ -212,17 +357,19 @@ int main(void) {
     wrefresh(registros);
     wrefresh(deco);
     
-
     char comando[1000] = {0}; // Se inicializa con el caracter nulo para evitar que salgan cosas raras (basura)
     int j = 0; // Contador de caracteres
     int linea = 0; // Contador de líneas
 
-    Registros(registros, AX, BX, CX, DX, PC, IR, LineaLeida);
+    PCB pcb; // Crear una instancia de la estructura PCB
+    memset(&pcb, 0, sizeof(PCB)); // Inicializar la estructura a 0
 
     Prompt(comandos, linea, comando);
 
+    Registros(registros, &pcb);
+
     while (1) {
-        LineaComandos(comandos, mensajes, comando, &j, &linea);
+        LineaComandos(comandos, mensajes, registros, comando, &j, &linea, &pcb);
         Prompt(comandos, linea, comando);
         usleep(100000);
         
