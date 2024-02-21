@@ -104,19 +104,38 @@ int ErroresInstrucciones(WINDOW *mensajes, int codigoError) {
     }
 }
 
+int ConversorStrings(WINDOW *mensajes, char *valor, PCB *pcb) {
+    int valor_numerico = 0;
+    int codigoError = 0;
+    if (isdigit(valor[0]) || (valor[0] == '-' && isdigit(valor[1]))) {
+        // Si valor es un número, conviértelo a entero o explota si no es un número
+        valor_numerico = atoi(valor);
+    } else {
+        // Si valor es un registro del PCB, asigna su valor correspondiente
+        if (strcmp(valor, "AX") == 0) valor_numerico = pcb->AX;
+        else if (strcmp(valor, "BX") == 0) valor_numerico = pcb->BX;
+        else if (strcmp(valor, "CX") == 0) valor_numerico = pcb->CX;
+        else if (strcmp(valor, "DX") == 0) valor_numerico = pcb->DX;
+        else {
+            // Si el registro no es válido, devuelve un error
+            codigoError = 107;
+            ErroresInstrucciones(mensajes, codigoError);
+            return codigoError;
+        }
+        return valor_numerico;
+    }
+}
+
 int EjecutarInstruccion(WINDOW *registros, WINDOW *mensajes, PCB *pcb, char *linea) {
     char instruccion[100], registro[100];
-    int valor;
+    char valor[100];
     int codigoError = 0;
 
     // Leer la instrucción y el registro de la línea
-    sscanf(linea, "%s %s %d", instruccion, registro, &valor);
+    sscanf(linea, "%s %s %s", instruccion, registro, valor);
 
-    // Convertir la línea a mayúsculas
-    for(int i = 0; linea[i]; i++){
-        linea[i] = toupper(linea[i]);
-    }
-    
+    int valor_numerico = ConversorStrings(mensajes, valor, pcb);
+
     strcpy(pcb->IR, linea); // Almacenar la línea en el registro IR
     // Incrementar el PC
     pcb->PC++;
@@ -127,54 +146,54 @@ int EjecutarInstruccion(WINDOW *registros, WINDOW *mensajes, PCB *pcb, char *lin
         ErroresInstrucciones(mensajes, codigoError);
         return 109; // Fin de archivo
     } 
-
+    
     // ----- INSTRUCCIONES PARA MOV -----
     else if (strcmp(instruccion, "MOV") == 0) {
-        if (strcmp(registro, "AX") == 0) pcb->AX = valor;
-        else if (strcmp(registro, "BX") == 0) pcb->BX = valor;
-        else if (strcmp(registro, "CX") == 0) pcb->CX = valor;
-        else if (strcmp(registro, "DX") == 0) pcb->DX = valor;
+        if (strcmp(registro, "AX") == 0) pcb->AX = valor_numerico;
+        else if (strcmp(registro, "BX") == 0) pcb->BX = valor_numerico;
+        else if (strcmp(registro, "CX") == 0) pcb->CX = valor_numerico;
+        else if (strcmp(registro, "DX") == 0) pcb->DX = valor_numerico;
     } 
     
     // ----- INSTRUCCIONES PARA ADD -----
     else if (strcmp(instruccion, "ADD") == 0) {
-        if (strcmp(registro, "AX") == 0) pcb->AX += valor;
-        else if (strcmp(registro, "BX") == 0) pcb->BX += valor;
-        else if (strcmp(registro, "CX") == 0) pcb->CX += valor;
-        else if (strcmp(registro, "DX") == 0) pcb->DX += valor;
+        if (strcmp(registro, "AX") == 0) pcb->AX += valor_numerico;
+        else if (strcmp(registro, "BX") == 0) pcb->BX += valor_numerico;
+        else if (strcmp(registro, "CX") == 0) pcb->CX += valor_numerico;
+        else if (strcmp(registro, "DX") == 0) pcb->DX += valor_numerico;
     } 
     
-    // ----- INSTRUCCIONES PARA SUB -----
+    //----- INSTRUCCIONES PARA SUB -----
     else if (strcmp(instruccion, "SUB") == 0) {
-        if (strcmp(registro, "AX") == 0) pcb->AX -= valor;
-        else if (strcmp(registro, "BX") == 0) pcb->BX -= valor;
-        else if (strcmp(registro, "CX") == 0) pcb->CX -= valor;
-        else if (strcmp(registro, "DX") == 0) pcb->DX -= valor;
+        if (strcmp(registro, "AX") == 0) pcb->AX -= valor_numerico;
+        else if (strcmp(registro, "BX") == 0) pcb->BX -= valor_numerico;
+        else if (strcmp(registro, "CX") == 0) pcb->CX -= valor_numerico;
+        else if (strcmp(registro, "DX") == 0) pcb->DX -= valor_numerico;
     } 
     
-    // ----- INSTRUCCIONES PARA MUL -----
+    //----- INSTRUCCIONES PARA MUL -----
     else if (strcmp(instruccion, "MUL") == 0) {
-        if (strcmp(registro, "AX") == 0) pcb->AX *= valor;
-        else if (strcmp(registro, "BX") == 0) pcb->BX *= valor;
-        else if (strcmp(registro, "CX") == 0) pcb->CX *= valor;
-        else if (strcmp(registro, "DX") == 0) pcb->DX *= valor;
+        if (strcmp(registro, "AX") == 0) pcb->AX *= valor_numerico;
+        else if (strcmp(registro, "BX") == 0) pcb->BX *= valor_numerico;
+        else if (strcmp(registro, "CX") == 0) pcb->CX *= valor_numerico;
+        else if (strcmp(registro, "DX") == 0) pcb->DX *= valor_numerico;
     } 
-
-    // ----- INSTRUCCIONES PARA DIV -----
+    
+    //----- INSTRUCCIONES PARA DIV -----
     else if (strcmp(instruccion, "DIV") == 0) {
-        if (valor == 0) {
+        if (valor_numerico == 0) {
             codigoError = 108;
             ErroresInstrucciones(mensajes, codigoError);
             return 1; // Error de división por cero
         } else {
-            if (strcmp(registro, "AX") == 0) pcb->AX /= valor;
-            else if (strcmp(registro, "BX") == 0) pcb->BX /= valor;
-            else if (strcmp(registro, "CX") == 0) pcb->CX /= valor;
-            else if (strcmp(registro, "DX") == 0) pcb->DX /= valor;
+            if (strcmp(registro, "AX") == 0) pcb->AX /= valor_numerico;
+            else if (strcmp(registro, "BX") == 0) pcb->BX /= valor_numerico;
+            else if (strcmp(registro, "CX") == 0) pcb->CX /= valor_numerico;
+            else if (strcmp(registro, "DX") == 0) pcb->DX /= valor_numerico;
         }
     } 
     
-    // ----- INSTRUCCIONES PARA INC -----
+    //----- INSTRUCCIONES PARA INC -----
     else if (strcmp(instruccion, "INC") == 0) {
         if (strcmp(registro, "AX") == 0) pcb->AX++;
         else if (strcmp(registro, "BX") == 0) pcb->BX++;
@@ -182,26 +201,27 @@ int EjecutarInstruccion(WINDOW *registros, WINDOW *mensajes, PCB *pcb, char *lin
         else if (strcmp(registro, "DX") == 0) pcb->DX++;
     } 
     
-    // ----- INSTRUCCIONES PARA DEC -----
+    //----- INSTRUCCIONES PARA DEC -----
     else if (strcmp(instruccion, "DEC") == 0) {
         if (strcmp(registro, "AX") == 0) pcb->AX--;
         else if (strcmp(registro, "BX") == 0) pcb->BX--;
         else if (strcmp(registro, "CX") == 0) pcb->CX--;
         else if (strcmp(registro, "DX") == 0) pcb->DX--;
-    }
-
-
-
+    } 
+    
     // ERROR
     else {
+        // Si la instrucción no es válida, devuelve un error
         codigoError = 107;
         ErroresInstrucciones(mensajes, codigoError);
         return codigoError;
     }
 
+    // No hay error
     codigoError = 0;
-    return 0; // No hay error
+    return 0;
 }
+
 
 int Cargar(WINDOW *registros,WINDOW *mensajes, PCB *pcb, char *nombre_archivo) {
     if (nombre_archivo[0] == '\0') { // Esto significa que no se ingresó un nombre de archivo
@@ -240,10 +260,10 @@ int Cargar(WINDOW *registros,WINDOW *mensajes, PCB *pcb, char *nombre_archivo) {
             return codigoError;
         }
 
+        
         strcpy(pcb->LineaLeida, linea);
-
         Registros(registros, pcb);
-        usleep(1000000);
+        usleep(100000);
 
         
     }
