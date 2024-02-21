@@ -776,8 +776,14 @@ int main(void) {
     while (1) {
         LineaComandos(comandos, mensajes, registros, comando, &j, &linea, &pcb);
         Prompt(comandos, linea, comando);
-
-    }
+        if (linea > 20) {
+            linea = 0;
+            wclear(comandos);
+            box(comandos, 0, 0);
+            mvwprintw(comandos, 0, 2, "COMANDOS");
+            wrefresh(comandos);
+        }
+    }  
 
     endwin();
     return 0;
