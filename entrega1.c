@@ -230,6 +230,7 @@ int EjecutarInstruccion(WINDOW *registros, WINDOW *mensajes, PCB *pcb, char *lin
                                                   (strcmp(valor, "CX") == 0) ||
                                                   (strcmp(valor, "DX") == 0) ||
                                                   (valor_numerico) == 0)) {
+
         valor_numerico = EsDigito(valor); // Comprueba si el valor es un registro o un número
         
         // Si el valor es un número, entonces se puede hacer la operacion
@@ -401,13 +402,12 @@ int EjecutarInstruccion(WINDOW *registros, WINDOW *mensajes, PCB *pcb, char *lin
                                                   (strcmp(valor, "DX") == 0) ||
                                                   (valor_numerico) == 0)) {
         valor_numerico = EsDigito(valor); // Comprueba si el valor es un registro o un número
-        
         // Si el valor es un número, entonces se puede hacer la operacion
+        
         if (valor_numerico == 1) 
          {
             DIV(mensajes, registro, valor, pcb);       
         }
-
         // Si el valor es un registro, entonces se debe comprobar si es un registro válido
         // Si el registro es válido, entonces se puede hacer la operación
         else if (valor_numerico == 0) {
@@ -419,10 +419,13 @@ int EjecutarInstruccion(WINDOW *registros, WINDOW *mensajes, PCB *pcb, char *lin
 
             else {
                 // Si el registro no es válido, devuelve un error
+                strcpy(pcb->IR, linea);
+                usleep(50000);
                 codigoError = 107;
                 ErroresInstrucciones(mensajes, codigoError);
                 return codigoError;
             }
+            
         }
 
         else {
@@ -526,12 +529,12 @@ int EjecutarInstruccion(WINDOW *registros, WINDOW *mensajes, PCB *pcb, char *lin
     else {
         // Si la instrucción no es válida, devuelve un error
         codigoError = 107;
-        printf("Exploto\n");
         ErroresInstrucciones(mensajes, codigoError);
         return codigoError;
     }
 
     // No hay error
+    
     codigoError = 0;
     return 0;
 }
@@ -547,16 +550,18 @@ int Cargar(WINDOW *registros,WINDOW *mensajes, PCB *pcb, char *nombre_archivo) {
     if (archivo == NULL) { // Si el archivo no existe
         return 102;
     }
-
+    
     char linea[100]; // Esta variable almacenará cada línea del archivo
     pcb->PC = 0; // Inicializar PC en 0
     while (fgets(linea, 100, archivo) != NULL) { // Leer cada línea del archivo
         linea[strcspn(linea, "\n")] = '\0'; // Eliminar el salto de línea (Para que se vea bonito en el prompt)
         // Ejecutar la instrucción de la línea
         //convierte la linea a mayusculas
+
         for(int i = 0; linea[i]; i++){
             linea[i] = toupper(linea[i]);
         }
+        
         int codigoError = EjecutarInstruccion(registros,mensajes, pcb, linea);
 
         if (codigoError == 109) {
@@ -578,9 +583,11 @@ int Cargar(WINDOW *registros,WINDOW *mensajes, PCB *pcb, char *nombre_archivo) {
         strcpy(pcb->LineaLeida, linea);
         Registros(registros, pcb);
         usleep(50000);
+        
 
         
     }
+
     fclose(archivo);
     return 103; // Fin de archivo
 }
@@ -617,7 +624,7 @@ int Enter(WINDOW *mensajes,WINDOW *registros, char *comando, PCB *pcb) {
 
 int LineaComandos(WINDOW *comandos, WINDOW *mensajes,WINDOW *registros, char *comando, int *j, int *linea, PCB *pcb) {
     int caracter = 0;
-    
+
     if (kbhit()) { // kbhit() devuelve 1 si se ha presionado una tecla y 0 si no
         caracter = getch(); // Leer la tecla presionada (caracter)
         if (caracter != ERR) { // Verificar si se presionó una tecla
@@ -627,15 +634,27 @@ int LineaComandos(WINDOW *comandos, WINDOW *mensajes,WINDOW *registros, char *co
                 *j = 0; // Reiniciar el contador de caracteres
                 (*linea)++; // Incrementar el contador de líneas
                 Errores(mensajes, codigoError, comando, j);
-            } else { // Agregar el carácter al búfer
+                } else if (caracter == 127 ){  //Tecla 127 Backspace, verificar si es
+                        if(*j>0){ //Si hay caracteres para borrar
+                                (*j)--;
+                                comando[*j]= '\0';
+
+                                int y,x;
+
+                                getyx(comandos,y,x); //Ventana de comandos
+                                mvwaddch(comandos, y,x-1, ' ');
+                                wmove(comandos, y, x-1);
+                                wrefresh(comandos);
+                }
+            } else  { // Agregar el carácter al búfer
                 comando[*j] = caracter; // Guardar el carácter en el comando
-                comando[(*j)+1]='\0';
+                comando[(*j)+1]= '\0';
                 (*j)++; // Incrementar el contador de caracteres
             }
         }
         //Prompt(comandos, *linea, comando);
     }
-    
+
     return 0;
 }
 
