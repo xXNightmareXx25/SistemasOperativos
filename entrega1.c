@@ -243,7 +243,7 @@ int Cargar(WINDOW *registros,WINDOW *mensajes, PCB *pcb, char *nombre_archivo) {
         strcpy(pcb->LineaLeida, linea);
 
         Registros(registros, pcb);
-        usleep(100000);
+        usleep(1000000);
 
         
     }
