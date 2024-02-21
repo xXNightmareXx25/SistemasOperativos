@@ -39,7 +39,7 @@ void Registros(WINDOW *registros, PCB *pcb) {
     wrefresh(registros);
 }
 
-void Errores(WINDOW *mensajes, int codigoError, char *comando, int *j, PCB *pcb) {
+int Errores(WINDOW *mensajes, int codigoError, char *comando, int *j, PCB *pcb) {
     if (codigoError == 104) {
         Mensajes(mensajes,"                                                                        ");
         Mensajes(mensajes, "Saliendo del programa...");
@@ -95,10 +95,11 @@ void Errores(WINDOW *mensajes, int codigoError, char *comando, int *j, PCB *pcb)
         memset(comando, 0, sizeof(comando)); // Limpiar el comando 
 
         *j = 0; // Reiniciar el contador de caracteres
+        return 5;
     }
 
     //--------------------------------------------------------------------------------
-
+    return 0;
 }
 
 
@@ -588,9 +589,11 @@ int LeerArchivo(WINDOW *registros,WINDOW *mensajes, PCB *pcb, FILE *archivo, cha
         strcpy(pcb->LineaLeida, linea);
         Registros(registros, pcb);
         usleep(50000);
+        return 1;
 }
 
 int Cargar(WINDOW *registros,WINDOW *mensajes, PCB *pcb, char *nombre_archivo) {
+    
     if (nombre_archivo[0] == '\0') { // Esto significa que no se ingresó un nombre de archivo
         return 101;
     }
@@ -604,35 +607,11 @@ int Cargar(WINDOW *registros,WINDOW *mensajes, PCB *pcb, char *nombre_archivo) {
     char linea[100]; // Esta variable almacenará cada línea del archivo
     pcb->PC = 0; // Inicializar PC en 0
     
-    
-    while (fgets(linea, 100, archivo) != NULL) { // Leer cada línea del archivo
-        linea[strcspn(linea, "\n")] = '\0'; // Eliminar el salto de línea (Para que se vea bonito en el prompt)
-        // Ejecutar la instrucción de la línea
-        Mayusculainador(linea);
-        
-        int codigoError = EjecutarInstruccion(registros,mensajes, pcb, linea);
 
-        if (codigoError == 109) {
-            fclose(archivo);
-            return 109; // Fin de archivo
-        }
 
-        if (codigoError == 103) {
-            fclose(archivo);
-            return 103; // Fin de archivo
-        }
-        
-        if (codigoError != 0) {
-            fclose(archivo);
-            return codigoError;
-        }
-
-        strcpy(pcb->IR, linea);
-        strcpy(pcb->LineaLeida, linea);
-        Registros(registros, pcb);
-        usleep(50000);
+    while (fgets(linea, 100, archivo) != NULL) {
+    LeerArchivo(registros,mensajes, pcb, archivo, linea);
     }
-
     
     fclose(archivo);
     return 103; // Fin de archivo
@@ -693,7 +672,9 @@ int LineaComandos(WINDOW *comandos, WINDOW *mensajes,WINDOW *registros, char *co
                 int codigoError = Enter(mensajes, registros, comando, pcb);
                 *j = 0; // Reiniciar el contador de caracteres
                 (*linea)++; // Incrementar el contador de líneas
+                
                 Errores(mensajes, codigoError, comando, j, pcb);
+
                 } else if (caracter == 127 ){  //Tecla 127 Backspace, verificar si es
                         if(*j>0){ //Si hay caracteres para borrar
                                 (*j)--;
@@ -774,9 +755,12 @@ int main(void) {
     Prompt(comandos, linea, comando);
 
     Registros(registros, pcb);
+    int EstaLeyendo = 0;
+    FILE *archivo = 0;
+    //igualar el puntero a null
 
     while (1) {
-        LineaComandos(comandos, mensajes, registros, comando, &j, &linea, pcb);
+        int codigoError = LineaComandos(comandos, mensajes, registros, comando, &j, &linea, pcb);
         Prompt(comandos, linea, comando);
         if (linea > 20) {
             linea = 0;
@@ -785,6 +769,13 @@ int main(void) {
             mvwprintw(comandos, 0, 2, "COMANDOS");
             wrefresh(comandos);
         }
+        // Funcion que lea la sigueinte linea del archivo
+        //se debe pasar el punteror del archivo
+        //si es load abre el archivo y el punttero no es null
+        //si el puntero tiene algo se le pasa a la funcion
+        //si se llega al final del archivo se cierra el archivo y el
+        //puntero se iguala a null
+
     }  
 
     free(pcb); // Liberar la memoria reservada para la estructura PCB
