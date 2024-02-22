@@ -564,7 +564,7 @@ int EjecutarInstruccion(WINDOW *registros, WINDOW *mensajes, PCB *pcb, char *lin
     return 0;
 }
 
-/*
+
 int LeerArchivo(WINDOW *registros,WINDOW *mensajes, PCB *pcb, FILE *archivo, char *linea) {
     linea[strcspn(linea, "\n")] = '\0'; // Eliminar el salto de línea (Para que se vea bonito en el prompt)
         // Ejecutar la instrucción de la línea
@@ -590,64 +590,25 @@ int LeerArchivo(WINDOW *registros,WINDOW *mensajes, PCB *pcb, FILE *archivo, cha
         strcpy(pcb->IR, linea);
         strcpy(pcb->LineaLeida, linea);
         Registros(registros, pcb);
-        usleep(50000);
+        usleep(100000);
         return 1;
 }
 
-int Cargar(WINDOW *registros,WINDOW *mensajes, PCB *pcb, char *nombre_archivo) {
-    
+int Cargar(WINDOW *registros, WINDOW *mensajes, PCB *pcb, char *nombre_archivo, FILE **archivo) {
     if (nombre_archivo[0] == '\0') { // Esto significa que no se ingresó un nombre de archivo
         return 101;
     }
 
-    FILE *archivo;
-    archivo = fopen(nombre_archivo, "r"); // Abrir el archivo en modo lectura
-    if (archivo == NULL) { // Si el archivo no existe
+    *archivo = fopen(nombre_archivo, "r"); // Abrir el archivo en modo lectura
+    if (*archivo == NULL) { // Si el archivo no existe
         return 102;
     }
-    
-    char linea[100]; // Esta variable almacenará cada línea del archivo
+
     pcb->PC = 0; // Inicializar PC en 0
-    
-
-
-    while (fgets(linea, 100, archivo) != NULL) {
-    LeerArchivo(registros,mensajes, pcb, archivo, linea);
-    }
-    
-    fclose(archivo);
-    return 103; // Fin de archivo
-}*/
-
-int LeerSiguinteLinea(FILE *archivo, char *linea){
-    if(fgets(linea, 100, archivo) != NULL){
-
-        return 1;
-    }
-    return 0;
+    return 0; // Regresar 0 significa que no hubo errores
 }
 
-int Cargar(WINDOW *registros,WINDOW *mensajes, PCB *pcb, char *nombre_archivo) {
-    
-    if (nombre_archivo[0] == '\0') { // Esto significa que no se ingresó un nombre de archivo
-        return 101;
-    }
-
-    FILE *archivo;
-    archivo = fopen(nombre_archivo, "r"); // Abrir el archivo en modo lectura
-    if (archivo == NULL) { // Si el archivo no existe
-        return 102;
-    }
-    
-    char linea[100]; // Esta variable almacenará cada línea del archivo
-    pcb->PC = 0; // Inicializar PC en 0
-    int codigoError = 0;
-    
-    fclose(archivo);
-    return 103; // Fin de archivo
-}
-
-int Enter(WINDOW *mensajes,WINDOW *registros, char *comando, PCB *pcb) {
+int Enter(WINDOW *mensajes, WINDOW *registros, char *comando, PCB *pcb, FILE **archivo) {
     char cmd[100];
     int height, width;
     getmaxyx(stdscr, height, width);
@@ -668,7 +629,7 @@ int Enter(WINDOW *mensajes,WINDOW *registros, char *comando, PCB *pcb) {
     sscanf(comando, "%s", cmd); // Leer el comando
     if ((strcmp(cmd, "cargar") == 0) || (strcmp(cmd, "load") == 0)){
         sscanf(comando, "%*s %s", param1); // Leer el primer parámetro
-        int resultado = Cargar(registros,mensajes, pcb, param1);
+        int resultado = Cargar(registros, mensajes, pcb, param1, archivo);
         memset(comando, 0, sizeof(comando)); // Limpiar el comando
         return resultado;
     }
@@ -690,7 +651,8 @@ int Enter(WINDOW *mensajes,WINDOW *registros, char *comando, PCB *pcb) {
     return 106; // Comando no reconocido
 }
 
-int LineaComandos(WINDOW *comandos, WINDOW *mensajes,WINDOW *registros, char *comando, int *j, int *linea, PCB *pcb) {
+
+int LineaComandos(WINDOW *comandos, WINDOW *mensajes, WINDOW *registros, char *comando, int *j, int *linea, PCB *pcb, FILE **archivo) {
     int caracter = 0;
 
     if (kbhit()) { // kbhit() devuelve 1 si se ha presionado una tecla y 0 si no
@@ -698,36 +660,37 @@ int LineaComandos(WINDOW *comandos, WINDOW *mensajes,WINDOW *registros, char *co
         if (caracter != ERR) { // Verificar si se presionó una tecla
             if (caracter == '\n') { // Verificar si la tecla fue Enter
                 comando[*j] = '\0'; // Finalizar el comando
-                int codigoError = Enter(mensajes, registros, comando, pcb);
+                int codigoError = Enter(mensajes, registros, comando, pcb, archivo);
                 *j = 0; // Reiniciar el contador de caracteres
                 (*linea)++; // Incrementar el contador de líneas
                 
                 Errores(mensajes, codigoError, comando, j, pcb);
 
-                } else if (caracter == 127 ){  //Tecla 127 Backspace, verificar si es
-                        if(*j>0){ //Si hay caracteres para borrar
-                                (*j)--;
-                                comando[*j]= '\0';
+            } else if (caracter == 127) {  // Tecla 127 Backspace, verificar si es
+                if (*j > 0) { // Si hay caracteres para borrar
+                    (*j)--;
+                    comando[*j] = '\0';
 
-                                int y,x;
+                    int y, x;
 
-                                getyx(comandos,y,x); //Ventana de comandos
-                                mvwaddch(comandos, y,x-1, ' ');                                
-                                wmove(comandos, y, x-1);
-                                mvwprintw(comandos, y, x-2, "                    ");
-                                wrefresh(comandos);
+                    getyx(comandos, y, x); // Ventana de comandos
+                    mvwaddch(comandos, y, x - 1, ' ');
+                    wmove(comandos, y, x - 1);
+                    mvwprintw(comandos, y, x - 2, "                    ");
+                    wrefresh(comandos);
                 }
-            } else  { // Agregar el carácter al búfer
+            } else { // Agregar el carácter al búfer
                 comando[*j] = caracter; // Guardar el carácter en el comando
-                comando[(*j)+1]= '\0';
+                comando[(*j) + 1] = '\0';
                 (*j)++; // Incrementar el contador de caracteres
             }
         }
-        //Prompt(comandos, *linea, comando);
+        // Prompt(comandos, *linea, comando);
     }
 
     return 0;
 }
+
 
 int main(void) {
     initscr();  // Inicializar la pantalla
@@ -784,12 +747,10 @@ int main(void) {
     Prompt(comandos, linea, comando);
 
     Registros(registros, pcb);
-    int EstaLeyendo = 0;
     FILE *archivo = 0;
-    //igualar el puntero a null
 
     while (1) {
-        int codigoError = LineaComandos(comandos, mensajes, registros, comando, &j, &linea, pcb);
+        int codigoError = LineaComandos(comandos, mensajes, registros, comando, &j, &linea, pcb, &archivo);
         Prompt(comandos, linea, comando);
         if (linea > 20) {
             linea = 0;
@@ -798,14 +759,18 @@ int main(void) {
             mvwprintw(comandos, 0, 2, "COMANDOS");
             wrefresh(comandos);
         }
-        // Funcion que lea la sigueinte linea del archivo
-        //se debe pasar el punteror del archivo
-        //si es load abre el archivo y el punttero no es null
-        //si el puntero tiene algo se le pasa a la funcion
-        //si se llega al final del archivo se cierra el archivo y el
-        //puntero se iguala a null
-
-    }  
+        
+        //Verificar si el puntero a archivo es diferente de null
+        if (archivo != NULL) {
+            char linea[100]; // Variable para almacenar la línea leída del archivo
+            if (fgets(linea, 100, archivo) != NULL) { // Leer una línea del archivo
+                LeerArchivo(registros, mensajes, pcb, archivo, linea);
+            } else { // Cerrar el archivo si ya no hay más líneas que leer
+                fclose(archivo);
+                archivo = NULL; // Igualar el puntero a null
+            }
+        }
+    }
 
     free(pcb); // Liberar la memoria reservada para la estructura PCB
     endwin();
