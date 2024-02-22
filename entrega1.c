@@ -507,9 +507,11 @@ int EjecutarInstruccion(WINDOW *registros, WINDOW *mensajes, PCB *pcb, char *lin
 
         else {
             // Si el registro no es válido, devuelve un error
-            strcpy(pcb->IR, linea); 
-            Registros(registros, pcb);
-            
+                strcpy(pcb->IR, linea); 
+                Registros(registros, pcb);
+                codigoError = 107;
+                ErroresInstrucciones(mensajes, codigoError, pcb);
+                return codigoError;
         }
 
     }
@@ -532,8 +534,7 @@ int EjecutarInstruccion(WINDOW *registros, WINDOW *mensajes, PCB *pcb, char *lin
 
         // Si el valor es un registro, entonces se debe comprobar si es un registro válido
         // Si el registro es válido, entonces se puede hacer la operación
-
-
+        
         if     (strcmp(registro, "AX") == 0) { DEC(mensajes, registro, pcb);}
         else if (strcmp(registro, "BX") == 0) { DEC(mensajes, registro, pcb);}
         else if (strcmp(registro, "CX") == 0) { DEC(mensajes, registro, pcb);}
@@ -541,9 +542,11 @@ int EjecutarInstruccion(WINDOW *registros, WINDOW *mensajes, PCB *pcb, char *lin
 
         else {
             // Si el registro no es válido, devuelve un error
-            strcpy(pcb->IR, linea); 
-            Registros(registros, pcb);
-            
+                strcpy(pcb->IR, linea); 
+                Registros(registros, pcb);
+                codigoError = 107;
+                ErroresInstrucciones(mensajes, codigoError, pcb);
+                return codigoError;
         }
 
     }
@@ -553,9 +556,11 @@ int EjecutarInstruccion(WINDOW *registros, WINDOW *mensajes, PCB *pcb, char *lin
     // ERROR
     else {
         // Si la instrucción no es válida, devuelve un error
-        codigoError = 107;
-        ErroresInstrucciones(mensajes, codigoError, pcb);
-        return codigoError;
+                strcpy(pcb->IR, linea); 
+                Registros(registros, pcb);
+                codigoError = 107;
+                ErroresInstrucciones(mensajes, codigoError, pcb);
+                return codigoError;
     }
 
     // No hay error
@@ -643,7 +648,7 @@ int Enter(WINDOW *mensajes, WINDOW *registros, char *comando, PCB *pcb, FILE **a
         pcb->DX = 0;
         pcb->PC = 0;
         strcpy(pcb->IR, "                      ");
-        strcpy(pcb->LineaLeida, "                ");
+        strcpy(pcb->LineaLeida, "                a");
         Registros(registros, pcb);
         return 110;
     }
@@ -748,7 +753,9 @@ int main(void) {
 
     Registros(registros, pcb);
     FILE *archivo = 0;
+    int y, x;
 
+    int i = 0;                
     while (1) {
         int codigoError = LineaComandos(comandos, mensajes, registros, comando, &j, &linea, pcb, &archivo);
         Prompt(comandos, linea, comando);
@@ -770,6 +777,8 @@ int main(void) {
                 archivo = NULL; // Igualar el puntero a null
             }
         }
+
+        
     }
 
     free(pcb); // Liberar la memoria reservada para la estructura PCB
