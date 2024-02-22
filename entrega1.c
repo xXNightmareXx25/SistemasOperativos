@@ -7,7 +7,6 @@
 #include "kbhit.h"
 #include <ctype.h>
 
-int EstaLeyendo = 0;
 // Estructura para el CPU
 typedef struct {
     int AX;
