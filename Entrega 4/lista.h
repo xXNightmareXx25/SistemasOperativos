@@ -219,6 +219,9 @@ void AsignarMarcos(struct PCB *nuevoNodo, FILE *SWAP, char *nombrePrograma, int 
         if (ArchivoCargado != NULL) {
             int PCarchivo = 0;
             while (fgets(linea, sizeof(linea), ArchivoCargado) != NULL) {
+                if(strcmp(linea, "\n") == 0){
+                    continue;
+                }
                 int Marco = PCarchivo / 16;
                 int Offset = PCarchivo % 16;
                 int MarcoSWAP = nuevoNodo->TMP[Marco];
